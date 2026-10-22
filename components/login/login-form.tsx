@@ -12,6 +12,7 @@ import {
   IconMail,
   IconX,
 } from "@tabler/icons-react"
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -97,21 +98,20 @@ export function LoginForm({
       <CardContent>
         <form id="login-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {rootError && (
-            <div
-              role="alert"
-              className="flex items-start gap-2.5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive animate-in fade-in slide-in-from-top-1"
-            >
-              <IconAlertCircle className="size-4 shrink-0 mt-0.5" />
-              <div className="flex-1 leading-snug">{rootError}</div>
-              <button
-                type="button"
-                onClick={() => form.clearErrors("root")}
-                aria-label="Dismiss error"
-                className="shrink-0 text-destructive/70 hover:text-destructive transition-colors cursor-pointer"
-              >
-                <IconX className="size-4" />
-              </button>
-            </div>
+            <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
+              <IconAlertCircle className="size-4" />
+              <AlertDescription className="leading-snug">{rootError}</AlertDescription>
+              <AlertAction>
+                <button
+                  type="button"
+                  onClick={() => form.clearErrors("root")}
+                  aria-label="Dismiss error"
+                  className="shrink-0 text-destructive/70 hover:text-destructive transition-colors cursor-pointer"
+                >
+                  <IconX className="size-4" />
+                </button>
+              </AlertAction>
+            </Alert>
           )}
 
           <FieldGroup>

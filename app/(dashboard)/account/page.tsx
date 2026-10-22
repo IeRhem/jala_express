@@ -16,6 +16,7 @@ import {
   IconUser,
 } from "@tabler/icons-react"
 import { authClient } from "@/lib/auth-client"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -186,9 +187,7 @@ export default function AccountPage() {
       }
     } catch (err) {
       console.error("Sign out error", err)
-      setLogoutError(
-        err instanceof Error ? err.message : "Failed to log out. Please try again."
-      )
+      setLogoutError("Failed to log out. Please try again.")
     } finally {
       setIsLoggingOut(false)
     }
@@ -252,13 +251,10 @@ export default function AccountPage() {
             </div>
           </div>
           {logoutError && (
-            <div
-              role="alert"
-              className="mt-4 flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              <IconAlertCircle className="size-4 shrink-0" />
-              <span>{logoutError}</span>
-            </div>
+            <Alert variant="destructive" className="mt-4">
+              <IconAlertCircle className="size-4" />
+              <AlertDescription>{logoutError}</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
@@ -292,20 +288,29 @@ export default function AccountPage() {
             <form onSubmit={handleProfileUpdate}>
               <CardContent className="space-y-4">
                 {profileMessage && (
-                  <div
-                    className={`flex items-center gap-2.5 rounded-lg p-3 text-sm ${
+                  <Alert
+                    variant={profileMessage.type === "error" ? "destructive" : "default"}
+                    className={
                       profileMessage.type === "success"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-destructive/10 text-destructive border border-destructive/20"
-                    }`}
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400"
+                        : undefined
+                    }
                   >
                     {profileMessage.type === "success" ? (
-                      <IconCheck className="size-4 shrink-0" />
+                      <IconCheck className="size-4" />
                     ) : (
-                      <IconAlertCircle className="size-4 shrink-0" />
+                      <IconAlertCircle className="size-4" />
                     )}
-                    <span>{profileMessage.text}</span>
-                  </div>
+                    <AlertDescription
+                      className={
+                        profileMessage.type === "success"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : undefined
+                      }
+                    >
+                      {profileMessage.text}
+                    </AlertDescription>
+                  </Alert>
                 )}
 
                 <Field>
@@ -384,20 +389,29 @@ export default function AccountPage() {
             <form onSubmit={handlePasswordUpdate}>
               <CardContent className="space-y-4">
                 {passwordMessage && (
-                  <div
-                    className={`flex items-center gap-2.5 rounded-lg p-3 text-sm ${
+                  <Alert
+                    variant={passwordMessage.type === "error" ? "destructive" : "default"}
+                    className={
                       passwordMessage.type === "success"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-destructive/10 text-destructive border border-destructive/20"
-                    }`}
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400"
+                        : undefined
+                    }
                   >
                     {passwordMessage.type === "success" ? (
-                      <IconCheck className="size-4 shrink-0" />
+                      <IconCheck className="size-4" />
                     ) : (
-                      <IconAlertCircle className="size-4 shrink-0" />
+                      <IconAlertCircle className="size-4" />
                     )}
-                    <span>{passwordMessage.text}</span>
-                  </div>
+                    <AlertDescription
+                      className={
+                        passwordMessage.type === "success"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : undefined
+                      }
+                    >
+                      {passwordMessage.text}
+                    </AlertDescription>
+                  </Alert>
                 )}
 
                 <Field>
