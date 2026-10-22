@@ -60,6 +60,7 @@ export default function AccountPage() {
 
   // Sign out state
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+  const [logoutError, setLogoutError] = React.useState<string | null>(null)
 
   const initials = React.useMemo(() => {
     const rawName = user?.name || "User"
@@ -119,10 +120,10 @@ export default function AccountPage() {
       return
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       setPasswordMessage({
         type: "error",
-        text: "New password must be at least 6 characters long.",
+        text: "New password must be at least 8 characters long.",
       })
       return
     }
@@ -168,9 +169,10 @@ export default function AccountPage() {
   }
 
   async function handleLogout() {
+    setLogoutError(null)
     try {
       setIsLoggingOut(true)
-      await authClient.signOut({
+      const res = await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
             router.push("/auth/login")
@@ -178,9 +180,15 @@ export default function AccountPage() {
           },
         },
       })
+      if (res?.error) {
+        setLogoutError(res.error.message || "Failed to log out. Please try again.")
+        return
+      }
     } catch (err) {
       console.error("Sign out error", err)
-      router.push("/auth/login")
+      setLogoutError(
+        err instanceof Error ? err.message : "Failed to log out. Please try again."
+      )
     } finally {
       setIsLoggingOut(false)
     }
@@ -239,10 +247,19 @@ export default function AccountPage() {
                 ) : (
                   <IconLogout className="size-3.5" />
                 )}
-                <span>{isLoggingOut ? "Loging out..." : "Log Out"}</span>
+                <span>{isLoggingOut ? "Logging out..." : "Log Out"}</span>
               </Button>
             </div>
           </div>
+          {logoutError && (
+            <div
+              role="alert"
+              className="mt-4 flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              <IconAlertCircle className="size-4 shrink-0" />
+              <span>{logoutError}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -414,7 +431,7 @@ export default function AccountPage() {
                     <IconLock className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Must be at least 6 characters long.
+                    Must be at least 8 characters long.
                   </p>
                 </Field>
 

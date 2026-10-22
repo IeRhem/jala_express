@@ -140,15 +140,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const timeRangeLabels: Record<string, string> = {
+  "90d": "Last 3 months",
+  "30d": "Last 30 days",
+  "7d": "Last 7 days",
+}
+
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("90d")
-
-  React.useEffect(() => {
-    if (isMobile) {
-      setTimeRange("7d")
-    }
-  }, [isMobile])
+  const [userTimeRange, setUserTimeRange] = React.useState<string | null>(null)
+  const timeRange = userTimeRange ?? (isMobile ? "7d" : "90d")
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
@@ -179,7 +180,9 @@ export function ChartAreaInteractive() {
             multiple={false}
             value={timeRange ? [timeRange] : []}
             onValueChange={(value) => {
-              setTimeRange(value[0] ?? "90d")
+              if (value[0]) {
+                setUserTimeRange(value[0])
+              }
             }}
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
@@ -190,9 +193,10 @@ export function ChartAreaInteractive() {
           </ToggleGroup>
           <Select
             value={timeRange}
+            items={timeRangeLabels}
             onValueChange={(value) => {
               if (value !== null) {
-                setTimeRange(value)
+                setUserTimeRange(value)
               }
             }}
           >

@@ -19,9 +19,10 @@ export function proxy(request: NextRequest) {
   const isAuthenticated = !!sessionToken;
   const isAuthRoute = pathname.startsWith("/auth");
 
-  // 3. When an authenticated user tries to visit /auth/login (or any /auth/* route),
-  // redirect them directly to the root (/) route
-  if (isAuthenticated && isAuthRoute) {
+  // 3. When an authenticated user tries to visit other /auth/* routes,
+  // redirect them directly to the root (/) route.
+  // Allow /auth/login through to reach its own server-side session check.
+  if (isAuthenticated && isAuthRoute && pathname !== "/auth/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

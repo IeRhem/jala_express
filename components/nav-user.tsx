@@ -29,6 +29,7 @@ import {
   IconLogout,
 } from "@tabler/icons-react"
 import { authClient } from "@/lib/auth-client"
+import { toast } from "sonner"
 
 export function NavUser({
   user: fallbackUser,
@@ -63,7 +64,7 @@ export function NavUser({
   async function handleLogout() {
     try {
       setIsLoggingOut(true)
-      await authClient.signOut({
+      const res = await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
             router.push("/auth/login")
@@ -71,9 +72,15 @@ export function NavUser({
           },
         },
       })
+      if (res?.error) {
+        toast.error(res.error.message || "Failed to log out. Please try again.")
+        return
+      }
     } catch (err) {
       console.error("Logout error", err)
-      router.push("/auth/login")
+      toast.error(
+        err instanceof Error ? err.message : "Failed to log out. Please try again."
+      )
     } finally {
       setIsLoggingOut(false)
     }

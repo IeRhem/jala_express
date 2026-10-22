@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "Login to your Jala Express account",
 };
 
+export const instant = false;
+
 export default async function LoginPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
