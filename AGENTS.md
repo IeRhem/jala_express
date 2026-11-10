@@ -8,6 +8,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+<!-- BEGIN:nextjs-agent-rules -->
+<!-- managed by `next dev` — don't hand-edit this block, it's regenerated automatically -->
+<!-- END:nextjs-agent-rules -->
+
 # SafeDrop Taraba
 
 Escrow-backed delivery platform for Taraba State, Nigeria. Buyer pays →
@@ -18,9 +22,11 @@ release, refund, or the seller sends a working replacement.
 ## Setup
 
 pnpm install
-cp .env.example .env   # needs DATABASE_URL, PAYSTACK_SECRET_KEY, WHATSAPP_CLOUD_API_TOKEN
-npx prisma migrate dev
-npx prisma db seed     # seeds Role (Admin/Ops/Rider) and starter Category/ServiceArea rows
+cp .env.example .env   # needs DATABASE_URL, PAYSTACK_SECRET_KEY, WHATSAPP_CLOUD_API_TOKEN,
+                        # WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET
+pnpm prisma contract emit   # regenerate contract.json / contract.d.ts after any contract.prisma change
+pnpm prisma db init         # create tables — Prisma 8, not `migrate dev`
+# then seed Role (Admin/Ops/Rider) and starter Category/ServiceArea rows — no `db seed` in the Prisma 8 CLI yet, so this is a one-off script for now
 
 ## Dev
 
@@ -28,7 +34,7 @@ pnpm dev
 
 ## Stack
 
-Next.js, TypeScript, Tailwind CSS, Prisma + PostgreSQL, Better Auth,
+Next.js, TypeScript, Tailwind CSS, Prisma ORM 8 (contract-based, `db.orm.public.*` client — not the `PrismaClient`/`@prisma/client` API) + PostgreSQL, Better Auth,
 Paystack (payments), WhatsApp Cloud API (order intake), Cloudflare R2
 (verification photos).
 
@@ -44,9 +50,16 @@ Paystack (payments), WhatsApp Cloud API (order intake), Cloudflare R2
 - All Paystack calls go through `lib/paystack.ts`. All WhatsApp sends
   go through `lib/whatsapp.ts`. Don't call either API directly from a
   route handler or server action.
-- This system holds real escrowed money. Don't edit `schema.prisma` or
-  anything under `lib/payments/` without flagging it explicitly first —
+- This system holds real escrowed money. Don't edit `prisma/contract.prisma`
+  or anything under `lib/payments/` without flagging it explicitly first —
   these aren't routine changes.
+- Prisma 8, not 7: import `db` from `@/prisma/db`, never `PrismaClient`
+  from `@prisma/client`. Queries are `db.orm.public.Model.where({...}).first()`
+  / `.all()`, not `findUnique`/`findMany`. Multi-step writes use
+  `db.transaction(async (tx) => ...)` with `tx.orm`, not `$transaction`.
+- Every inbound WhatsApp message is claimed in `WebhookInbox` by its
+  `wamid` before processing — this is what actually prevents a WhatsApp
+  retry from double-firing a status change, not the webhook's HTTP 200.
 
 ## Testing
 
