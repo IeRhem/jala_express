@@ -34,6 +34,15 @@ import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Account Settings",
+  description:
+    "Manage your personal profile, credentials, and active sessions on Jala Express.",
+};
+
+
 export default function AccountPage() {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()

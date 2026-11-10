@@ -10,6 +10,9 @@ model User {
   updatedAt     temporal.updatedAt()
   sessions      Session[]
   accounts      Account[]
+  staff         Staff?
+  buyer         Buyer?
+  vendor        Vendor?
 
   @@unique([email])
   @@map("user")
@@ -64,31 +67,23 @@ model Verification {
 }
 
 // ── Lookup tables ───────────────────────────────────────────────
-// Category and ServiceArea are tables, not enums: ops adds a new
-// category or town from the dashboard, not a code deploy. The
-// enums further down stay enums because they're branched on in
-// application logic — adding a value there needs a code change
-// regardless, so a table would only add indirection.
 
 model Category {
-  id           String        @id @default(uuid())
-  name         String        @unique // "Food", "Electronics", "Rides"
-  slug         String        @unique
-  active       Boolean       @default(true)
+  id           String           @id @default(uuid())
+  name         String           @unique // "Food", "Electronics", "Rides"
+  slug         String           @unique
+  active       Boolean          @default(true)
   vendors      VendorCategory[]
   transactions Transaction[]
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime         @default(now())
 }
 
-// A vendor can serve many categories, and a category can have many vendors.
-// The explicit join model lets SafeDrop enable/disable a vendor's category
-// offering independently and add category-specific terms later.
 model VendorCategory {
-  vendorId  String
+  vendorId   String
   categoryId String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt temporal.updatedAt()
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  temporal.updatedAt()
 
   vendor   Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -107,12 +102,6 @@ model ServiceArea {
   createdAt DateTime @default(now())
 }
 
-// Staff roles join the lookup tables too: adding "Supervisor" or
-// splitting "Ops" into "Dispatcher"/"Customer Care" is a dashboard
-// action. Note what this does NOT do: a new role row has no
-// behavior of its own — permissions, dashboard views, anything
-// role-specific still gets written in code. This table only
-// removes the need for a migration to add the *label*.
 model Role {
   id        String   @id @default(uuid())
   name      String   @unique // "Admin", "Ops", "Rider"
@@ -133,11 +122,11 @@ enum TransactionStatus {
   DELIVERED
   CONFIRMED
   REJECTED_AT_DELIVERY
+  PAYOUT_PENDING
   RELEASED
+  REFUND_PENDING
   REFUNDED
   DISPUTED
-  REFUND_PENDING
-  PAYOUT_PENDING
   CANCELLED
   EXPIRED
 }
@@ -146,6 +135,7 @@ enum DeliveryEvidenceType {
   PICKUP_INSPECTION
   DELIVERY_PROOF
   BUYER_DECISION
+  DISPUTE_EVIDENCE
   OTHER
 }
 
@@ -164,18 +154,18 @@ enum PaymentType {
 
 enum PaymentStatus {
   PENDING
+  PROCESSING
   SUCCESS
   FAILED
-  PROCESSING
   REVERSED
 }
 
 enum PaymentProvider {
-  PAYSTACK // add FLUTTERWAVE etc. here later — no other schema change needed
+  PAYSTACK
 }
 
 enum EventActorType {
-  STAFF  // who, specifically, is on staffId → Staff.role
+  STAFF
   BUYER
   SYSTEM
 }
@@ -183,47 +173,48 @@ enum EventActorType {
 // ── People ──────────────────────────────────────────────────────
 
 model Buyer {
-  id              String        @id @default(uuid())
-  phone           String        @unique // primary identifier — found-or-created on first contact
-  contactChannel  String        @default("whatsapp") // how they're currently reached; add more channels later without renaming this field
-  name            String?
-  userId          String?       @unique // links to a Better Auth User once buyer login exists
-  transactions    Transaction[]
-  conversations   Conversation[]
-  createdAt       DateTime      @default(now())
-  updatedAt       temporal.updatedAt()
+  id             String         @id @default(uuid())
+  phone          String         @unique
+  contactChannel String         @default("whatsapp")
+  name           String?
+  userId         String?        @unique
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transactions   Transaction[]
+  conversations  Conversation[]
+  createdAt      DateTime       @default(now())
+  updatedAt      temporal.updatedAt()
 }
 
 model Vendor {
-  id               String        @id @default(uuid())
-  businessName     String
-  categories       VendorCategory[]
-  area             ServiceArea   @relation(fields: [areaId], references: [id])
-  areaId           String
-  phone            String
-  payoutProvider   PaymentProvider @default(PAYSTACK)
-  payoutRecipientRef String?     // the provider's recipient/subaccount code — provider named via payoutProvider, not the field name
-  userId           String?       @unique // links to a Better Auth User once vendor self-service login exists
-  active           Boolean       @default(true)
-  transactions     Transaction[]
-  createdAt        DateTime      @default(now())
-  updatedAt        temporal.updatedAt()
+  id                 String           @id @default(uuid())
+  businessName       String
+  categories         VendorCategory[]
+  area               ServiceArea      @relation(fields: [areaId], references: [id])
+  areaId             String
+  phone              String
+  payoutProvider     PaymentProvider  @default(PAYSTACK)
+  payoutRecipientRef String?          // Paystack transfer recipient code (e.g. RCP_xxx)
+  bankName           String?
+  accountNumber      String?
+  userId             String?          @unique
+  user               User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  active             Boolean          @default(true)
+  transactions       Transaction[]
+  createdAt          DateTime         @default(now())
+  updatedAt          temporal.updatedAt()
 }
 
-// Every person who works for SafeDrop — admin, ops, or rider —
-// is one Staff row, distinguished by role. A rider today is just
-// a Staff row with role RIDER and no userId yet; the same row
-// gains login the day the rider app ships, no migration needed.
 model Staff {
   id                String             @id @default(uuid())
-  userId            String?            @unique // links to a Better Auth User once this person has login access
+  userId            String?            @unique
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   name              String
-  phone             String
+  phone             String             @unique
   role              Role               @relation(fields: [roleId], references: [id])
   roleId            String
   active            Boolean            @default(true)
-  transactions      Transaction[]      // transactions where this staff member is the assigned rider
-  transactionEvents TransactionEvent[] // every event this staff member performed
+  transactions      Transaction[]
+  transactionEvents TransactionEvent[]
   deliveryEvidence  DeliveryEvidence[]
   createdAt         DateTime           @default(now())
   updatedAt         temporal.updatedAt()
@@ -234,28 +225,30 @@ model Staff {
 // ── Transaction ─────────────────────────────────────────────
 
 model Transaction {
-  id              String             @id @default(uuid())
-  buyer           Buyer              @relation(fields: [buyerId], references: [id])
-  buyerId         String
-  vendor          Vendor             @relation(fields: [vendorId], references: [id])
-  vendorId        String
-  rider           Staff?             @relation(fields: [riderId], references: [id]) // the Staff member (role RIDER) assigned to this transaction
-  riderId         String?
-  category        Category           @relation(fields: [categoryId], references: [id])
-  categoryId      String
-  itemDescription String
-  amount          Int                // item price in kobo; never use Float for money
-  totalAmount     Int?               // total buyer checkout amount in kobo; null means amount for legacy rows
-  currency        String             @default("NGN")
-  status          TransactionStatus  @default(PENDING_PAYMENT)
-  sourceMessageId String?            @unique // WhatsApp wamid that created this deal; prevents duplicate orders
-  deliveryAttempt Int                @default(1) // bumped each time a replacement cycle runs
-  payments        Payment[]
-  events          TransactionEvent[]
+  id               String             @id @default(uuid())
+  buyer            Buyer              @relation(fields: [buyerId], references: [id])
+  buyerId          String
+  vendor           Vendor             @relation(fields: [vendorId], references: [id])
+  vendorId         String
+  rider            Staff?             @relation(fields: [riderId], references: [id])
+  riderId          String?
+  category         Category           @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  itemDescription  String
+  amount           Int                // seller item price in kobo
+  escrowFee        Int                @default(0) // SafeDrop platform fee in kobo
+  deliveryFee      Int                @default(0) // rider fee in kobo
+  totalAmount      Int                // amount + escrowFee + deliveryFee in kobo
+  currency         String             @default("NGN")
+  status           TransactionStatus  @default(PENDING_PAYMENT)
+  sourceMessageId  String?            @unique
+  deliveryAttempt  Int                @default(1)
+  payments         Payment[]
+  events           TransactionEvent[]
   deliveryEvidence DeliveryEvidence[]
   outboxEvents     OutboxEvent[]
-  createdAt       DateTime           @default(now())
-  updatedAt       temporal.updatedAt()
+  createdAt        DateTime           @default(now())
+  updatedAt        temporal.updatedAt()
 
   @@index([status])
   @@index([buyerId])
@@ -264,76 +257,64 @@ model Transaction {
   @@index([categoryId])
 }
 
-// A Transaction can carry several Payment rows over its life: the
-// initial collection, a payout on release, a refund, or a retry
-// after a failed attempt — instead of fixed single-payment columns.
 model Payment {
-  id            String          @id @default(uuid())
-  transaction   Transaction     @relation(fields: [transactionId], references: [id])
-  transactionId String
-  type          PaymentType
-  provider      PaymentProvider @default(PAYSTACK)
-  reference     String          @unique // internal/provider reference; unique per operation
-  checkoutUrl   String?
-  providerId    String?         // Paystack transaction/transfer identifier when supplied
-  idempotencyKey String?        @unique
-  paidAt        DateTime?
-  failureReason String?
-  amount        Int             // kobo
-  status        PaymentStatus   @default(PENDING)
-  createdAt     DateTime        @default(now())
-  updatedAt     temporal.updatedAt()
+  id             String          @id @default(uuid())
+  transaction    Transaction     @relation(fields: [transactionId], references: [id])
+  transactionId  String
+  type           PaymentType
+  provider       PaymentProvider @default(PAYSTACK)
+  reference      String          @unique
+  checkoutUrl    String?
+  providerId     String?
+  idempotencyKey String?         @unique
+  paidAt         DateTime?
+  failureReason  String?
+  amount         Int             // kobo
+  status         PaymentStatus   @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      temporal.updatedAt()
 
   @@index([transactionId])
   @@index([status])
 }
 
-// Evidence is separate from status events because one transaction may have
-// multiple photos/files across pickup, delivery, and buyer decision stages.
-// Store private object keys/metadata here; keep the bucket private and issue
-// short-lived signed URLs rather than making evidence publicly accessible.
 model DeliveryEvidence {
-  id             String                  @id @default(uuid())
-  transaction    Transaction             @relation(fields: [transactionId], references: [id])
+  id             String                   @id @default(uuid())
+  transaction    Transaction              @relation(fields: [transactionId], references: [id])
   transactionId  String
   type           DeliveryEvidenceType
   outcome        DeliveryEvidenceOutcome?
   actorType      EventActorType
-  staff          Staff?                  @relation(fields: [staffId], references: [id])
+  staff          Staff?                   @relation(fields: [staffId], references: [id])
   staffId        String?
-  objectKey      String                  // private R2 object key; not a public URL
+  objectKey      String                   // private R2 object key
   originalName   String?
   mimeType       String?
   sizeBytes      Int?
   checksumSha256 String?
   notes          String?
   capturedAt     DateTime?
-  createdAt      DateTime                @default(now())
+  createdAt      DateTime                 @default(now())
 
   @@index([transactionId, type, createdAt])
   @@index([staffId])
 }
 
-// Every status change, by anyone. actorType is STAFF, BUYER, or
-// SYSTEM; when it's STAFF, staffId says who and Staff.role (via
-// the Role table) says in what capacity — admin, ops, rider, or
-// whatever role gets added later.
 model TransactionEvent {
-  id            String               @id @default(uuid())
-  transaction   Transaction          @relation(fields: [transactionId], references: [id])
+  id            String                   @id @default(uuid())
+  transaction   Transaction              @relation(fields: [transactionId], references: [id])
   transactionId String
   fromStatus    TransactionStatus?
   toStatus      TransactionStatus
-  outcome       DeliveryEvidenceOutcome? // optional structured outcome for an event
+  outcome       DeliveryEvidenceOutcome?
   actorType     EventActorType
-  staff         Staff?               @relation(fields: [staffId], references: [id])
+  staff         Staff?                   @relation(fields: [staffId], references: [id])
   staffId       String?
   notes         String?
-  createdAt     DateTime             @default(now())
+  createdAt     DateTime                 @default(now())
 
   @@index([transactionId])
 }
-
 
 enum InboxProvider {
   WHATSAPP
@@ -358,7 +339,7 @@ model Conversation {
   id            String   @id @default(uuid())
   buyer         Buyer    @relation(fields: [buyerId], references: [id])
   buyerId       String
-  state         String   @default("IDLE") // application-owned state machine
+  state         String   @default("IDLE")
   context       Json?
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
@@ -369,15 +350,15 @@ model Conversation {
 }
 
 model WebhookInbox {
-  id          String       @id @default(uuid())
+  id          String        @id @default(uuid())
   provider    InboxProvider
-  eventId     String       @unique // WhatsApp wamid or stable Paystack event/reference key
+  eventId     String        @unique
   eventType   String
   payload     Json
-  status      InboxStatus  @default(RECEIVED)
-  attempts    Int          @default(0)
+  status      InboxStatus   @default(RECEIVED)
+  attempts    Int           @default(0)
   lastError   String?
-  receivedAt  DateTime     @default(now())
+  receivedAt  DateTime      @default(now())
   processedAt DateTime?
   updatedAt   temporal.updatedAt()
 
@@ -388,7 +369,7 @@ model OutboxEvent {
   id             String       @id @default(uuid())
   transaction    Transaction? @relation(fields: [transactionId], references: [id])
   transactionId  String?
-  kind           String       // e.g. WHATSAPP_TEXT
+  kind           String       // WHATSAPP_TEXT, WHATSAPP_BUTTONS, PAYSTACK_TRANSFER, PAYSTACK_REFUND
   idempotencyKey String       @unique
   payload        Json
   status         OutboxStatus @default(PENDING)
