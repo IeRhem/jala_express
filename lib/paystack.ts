@@ -1,7 +1,10 @@
+import "server-only";
 import crypto from "crypto";
+import { Temporal } from "temporal-polyfill/full";
 import { db } from "@/prisma/db";
 import { applySafeTransition } from "@/lib/escrow-ledger";
 import { processPendingOutbox } from "@/lib/outbox";
+import { COMMON_NIGERIAN_BANKS } from "@/lib/paystack-banks";
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "";
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
@@ -17,6 +20,92 @@ export function verifyPaystackSignature(rawBody: string, signatureHeader: string
   } catch {
     return false;
   }
+}
+
+/**
+ * Resolves a 10-digit Nigerian NUBAN account number against Paystack's Bank Directory
+ * so Ops can confirm the seller's real bank account name before onboarding.
+ */
+export async function resolveBankAccount(accountNumber: string, bankCode: string): Promise<{
+  accountName: string;
+  accountNumber: string;
+  bankCode: string;
+}> {
+  const cleanAccount = accountNumber.trim();
+  if (!/^\d{10}$/.test(cleanAccount)) {
+    throw new Error("Account number must be exactly 10 digits (NUBAN).");
+  }
+
+  if (!PAYSTACK_SECRET_KEY) {
+    return {
+      accountName: "MOCK VERIFIED VENDOR ACCOUNT",
+      accountNumber: cleanAccount,
+      bankCode,
+    };
+  }
+
+  const url = `${PAYSTACK_BASE_URL}/bank/resolve?account_number=${encodeURIComponent(cleanAccount)}&bank_code=${encodeURIComponent(bankCode)}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Bank account verification failed: ${errText}`);
+  }
+
+  const json = await res.json();
+  return {
+    accountName: json.data?.account_name || "Verified Seller",
+    accountNumber: json.data?.account_number || cleanAccount,
+    bankCode,
+  };
+}
+
+/**
+ * Registers a Paystack Transfer Recipient (type: nuban) and returns the `RCP_xxxx` code
+ * stored in `Vendor.payoutRecipientRef` for automated escrow releases.
+ */
+export async function createPaystackTransferRecipient(params: {
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+}): Promise<{ recipientCode: string; bankName: string }> {
+  const bankObj = COMMON_NIGERIAN_BANKS.find((b) => b.code === params.bankCode);
+  const fallbackBankName = bankObj?.name || `Bank (${params.bankCode})`;
+
+  if (!PAYSTACK_SECRET_KEY) {
+    return {
+      recipientCode: `RCP_mock_${Date.now().toString(36)}`,
+      bankName: fallbackBankName,
+    };
+  }
+
+  const res = await fetch(`${PAYSTACK_BASE_URL}/transferrecipient`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "nuban",
+      name: params.name,
+      account_number: params.accountNumber.trim(),
+      bank_code: params.bankCode,
+      currency: "NGN",
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to create Paystack transfer recipient: ${await res.text()}`);
+  }
+
+  const json = await res.json();
+  return {
+    recipientCode: json.data.recipient_code,
+    bankName: json.data?.details?.bank_name || fallbackBankName,
+  };
 }
 
 export async function initializeCollectionCheckout(transactionId: string, callbackUrl?: string) {
@@ -97,7 +186,7 @@ export async function initiateSellerPayout(transactionId: string) {
       },
       body: JSON.stringify({
         source: "balance",
-        amount: tx.amount, // Seller gets item price in kobo
+        amount: tx.amount,
         recipient: vendor.payoutRecipientRef,
         reference,
         reason: `SafeDrop Escrow Release: ${tx.itemDescription}`,
@@ -188,7 +277,7 @@ export async function handlePaystackWebhookEvent(eventType: string, data: Record
     await db.orm.public.Payment.where({ id: payment.id }).update({
       status: "SUCCESS",
       providerId: String(data.id ?? ""),
-      paidAt: new Date(),
+      paidAt: Temporal.Now.instant(),
     });
 
     const tx = await db.orm.public.Transaction.where({ id: payment.transactionId }).first();
@@ -207,12 +296,24 @@ export async function handlePaystackWebhookEvent(eventType: string, data: Record
         outboxEvents: [
           {
             kind: "WHATSAPP_TEXT",
-            idempotencyKey: `wa:held:${tx.id}`,
+            idempotencyKey: `wa:held:buyer:${tx.id}`,
             payload: {
               to: buyer.phone,
               text: `🔒 Payment of ₦${((tx.totalAmount || tx.amount) / 100).toLocaleString()} received and safely held in SafeDrop Escrow! Our agent will now collect and inspect "${tx.itemDescription}" from ${vendor?.businessName ?? "the seller"}.`,
             },
           },
+          ...(vendor?.phone
+            ? [
+                {
+                  kind: "WHATSAPP_TEXT" as const,
+                  idempotencyKey: `wa:held:vendor:${tx.id}`,
+                  payload: {
+                    to: vendor.phone,
+                    text: `🔔 SafeDrop Escrow Alert: Buyer payment of ₦${(tx.amount / 100).toLocaleString()} for "${tx.itemDescription}" is now HELD in escrow. Please prepare the item for our pickup agent.`,
+                  },
+                },
+              ]
+            : []),
         ],
       });
       await processPendingOutbox();
@@ -223,7 +324,7 @@ export async function handlePaystackWebhookEvent(eventType: string, data: Record
 
     await db.orm.public.Payment.where({ id: payment.id }).update({
       status: "SUCCESS",
-      paidAt: new Date(),
+      paidAt: Temporal.Now.instant(),
     });
 
     const tx = await db.orm.public.Transaction.where({ id: payment.transactionId }).first();
@@ -238,18 +339,32 @@ export async function handlePaystackWebhookEvent(eventType: string, data: Record
       toStatus: "RELEASED",
       actorType: "SYSTEM",
       notes: `Paystack transfer (${reference}) released to seller.`,
-      outboxEvents: buyer
-        ? [
-            {
-              kind: "WHATSAPP_TEXT",
-              idempotencyKey: `wa:released:${tx.id}`,
-              payload: {
-                to: buyer.phone,
-                text: `🎉 Escrow complete! Payment has been released to ${vendor?.businessName ?? "the seller"}. Thank you for using SafeDrop Taraba.`,
+      outboxEvents: [
+        ...(buyer
+          ? [
+              {
+                kind: "WHATSAPP_TEXT" as const,
+                idempotencyKey: `wa:released:buyer:${tx.id}`,
+                payload: {
+                  to: buyer.phone,
+                  text: `🎉 Escrow complete! Payment has been released to ${vendor?.businessName ?? "the seller"}. Thank you for using SafeDrop Taraba.`,
+                },
               },
-            },
-          ]
-        : [],
+            ]
+          : []),
+        ...(vendor?.phone
+          ? [
+              {
+                kind: "WHATSAPP_TEXT" as const,
+                idempotencyKey: `wa:released:vendor:${tx.id}`,
+                payload: {
+                  to: vendor.phone,
+                  text: `💰 SafeDrop Payout Released: ₦${(tx.amount / 100).toLocaleString()} for "${tx.itemDescription}" has been sent to your bank account.`,
+                },
+              },
+            ]
+          : []),
+      ],
     });
     await processPendingOutbox();
   } else if (eventType === "refund.processed") {
@@ -267,7 +382,7 @@ export async function handlePaystackWebhookEvent(eventType: string, data: Record
     if (refundPayment) {
       await db.orm.public.Payment.where({ id: refundPayment.id }).update({
         status: "SUCCESS",
-        paidAt: new Date(),
+        paidAt: Temporal.Now.instant(),
       });
     }
 

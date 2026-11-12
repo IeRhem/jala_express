@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill/full";
 import { db } from "@/prisma/db";
 import { sendText, sendButtons } from "@/lib/whatsapp";
 import { initiateSellerPayout, initiateBuyerRefund } from "@/lib/paystack";
@@ -37,7 +38,7 @@ export async function processPendingOutbox(limit = 20): Promise<number> {
 
       await db.orm.public.OutboxEvent.where({ id: ev.id }).update({
         status: "SENT",
-        sentAt: new Date(),
+        sentAt: Temporal.Now.instant(),
         lastError: null,
       });
       processed++;

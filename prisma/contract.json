@@ -118,6 +118,10 @@
                 "value": "BUYER_DECISION"
               },
               {
+                "name": "DISPUTE_EVIDENCE",
+                "value": "DISPUTE_EVIDENCE"
+              },
+              {
                 "name": "OTHER",
                 "value": "OTHER"
               }
@@ -212,16 +216,16 @@
                 "value": "PENDING"
               },
               {
+                "name": "PROCESSING",
+                "value": "PROCESSING"
+              },
+              {
                 "name": "SUCCESS",
                 "value": "SUCCESS"
               },
               {
                 "name": "FAILED",
                 "value": "FAILED"
-              },
-              {
-                "name": "PROCESSING",
-                "value": "PROCESSING"
               },
               {
                 "name": "REVERSED",
@@ -282,8 +286,16 @@
                 "value": "REJECTED_AT_DELIVERY"
               },
               {
+                "name": "PAYOUT_PENDING",
+                "value": "PAYOUT_PENDING"
+              },
+              {
                 "name": "RELEASED",
                 "value": "RELEASED"
+              },
+              {
+                "name": "REFUND_PENDING",
+                "value": "REFUND_PENDING"
               },
               {
                 "name": "REFUNDED",
@@ -292,14 +304,6 @@
               {
                 "name": "DISPUTED",
                 "value": "DISPUTED"
-              },
-              {
-                "name": "REFUND_PENDING",
-                "value": "REFUND_PENDING"
-              },
-              {
-                "name": "PAYOUT_PENDING",
-                "value": "PAYOUT_PENDING"
               },
               {
                 "name": "CANCELLED",
@@ -551,6 +555,22 @@
                 },
                 "to": {
                   "model": "Transaction",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
                   "namespace": "public"
                 }
               }
@@ -1697,6 +1717,22 @@
                   "model": "Transaction",
                   "namespace": "public"
                 }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -1774,6 +1810,20 @@
                   "kind": "scalar"
                 }
               },
+              "deliveryFee": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "escrowFee": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -1816,7 +1866,7 @@
                 }
               },
               "totalAmount": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -1982,6 +2032,12 @@
                 },
                 "deliveryAttempt": {
                   "column": "deliveryAttempt"
+                },
+                "deliveryFee": {
+                  "column": "deliveryFee"
+                },
+                "escrowFee": {
+                  "column": "escrowFee"
                 },
                 "id": {
                   "column": "id"
@@ -2238,6 +2294,22 @@
                   "namespace": "public"
                 }
               },
+              "buyer": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Buyer",
+                  "namespace": "public"
+                }
+              },
               "sessions": {
                 "cardinality": "1:N",
                 "on": {
@@ -2250,6 +2322,38 @@
                 },
                 "to": {
                   "model": "Session",
+                  "namespace": "public"
+                }
+              },
+              "staff": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Staff",
+                  "namespace": "public"
+                }
+              },
+              "vendor": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Vendor",
                   "namespace": "public"
                 }
               }
@@ -2284,6 +2388,13 @@
           },
           "Vendor": {
             "fields": {
+              "accountNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "active": {
                 "nullable": false,
                 "type": {
@@ -2293,6 +2404,13 @@
               },
               "areaId": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "bankName": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -2407,15 +2525,37 @@
                   "model": "Transaction",
                   "namespace": "public"
                 }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
+                "accountNumber": {
+                  "column": "accountNumber"
+                },
                 "active": {
                   "column": "active"
                 },
                 "areaId": {
                   "column": "areaId"
+                },
+                "bankName": {
+                  "column": "bankName"
                 },
                 "businessName": {
                   "column": "businessName"
@@ -2799,7 +2939,30 @@
                   "nullable": true
                 }
               },
-              "foreignKeys": [],
+              "foreignKeys": [
+                {
+                  "index": {
+                    "unique": [
+                      "userId"
+                    ]
+                  },
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Buyer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
               "indexes": [],
               "primaryKey": {
                 "columns": [
@@ -2985,8 +3148,8 @@
                   "prefix": "DeliveryEvidence_outcome_check"
                 },
                 {
-                  "expression": "\"type\" IN ('PICKUP_INSPECTION', 'DELIVERY_PROOF', 'BUYER_DECISION', 'OTHER')",
-                  "name": "DeliveryEvidence_type_check_06bc23fa",
+                  "expression": "\"type\" IN ('PICKUP_INSPECTION', 'DELIVERY_PROOF', 'BUYER_DECISION', 'DISPUTE_EVIDENCE', 'OTHER')",
+                  "name": "DeliveryEvidence_type_check_5c98cfda",
                   "prefix": "DeliveryEvidence_type_check"
                 }
               ],
@@ -3312,8 +3475,8 @@
                   "prefix": "Payment_provider_check"
                 },
                 {
-                  "expression": "\"status\" IN ('PENDING', 'SUCCESS', 'FAILED', 'PROCESSING', 'REVERSED')",
-                  "name": "Payment_status_check_1c8c59b7",
+                  "expression": "\"status\" IN ('PENDING', 'PROCESSING', 'SUCCESS', 'FAILED', 'REVERSED')",
+                  "name": "Payment_status_check_343cabca",
                   "prefix": "Payment_status_check"
                 },
                 {
@@ -3646,6 +3809,28 @@
               "foreignKeys": [
                 {
                   "index": {
+                    "unique": [
+                      "userId"
+                    ]
+                  },
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Staff"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "index": {
                     "name": "Staff_roleId_idx_ffccc9a4"
                   },
                   "source": {
@@ -3684,14 +3869,19 @@
                   "columns": [
                     "userId"
                   ]
+                },
+                {
+                  "columns": [
+                    "phone"
+                  ]
                 }
               ]
             },
             "Transaction": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'RELEASED', 'REFUNDED', 'DISPUTED', 'REFUND_PENDING', 'PAYOUT_PENDING', 'CANCELLED', 'EXPIRED')",
-                  "name": "Transaction_status_check_dff1c496",
+                  "expression": "\"status\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'PAYOUT_PENDING', 'RELEASED', 'REFUND_PENDING', 'REFUNDED', 'DISPUTED', 'CANCELLED', 'EXPIRED')",
+                  "name": "Transaction_status_check_150725fd",
                   "prefix": "Transaction_status_check"
                 }
               ],
@@ -3738,6 +3928,24 @@
                   },
                   "nullable": false
                 },
+                "deliveryFee": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "escrowFee": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -3776,7 +3984,7 @@
                 "totalAmount": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
-                  "nullable": true
+                  "nullable": false
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -3930,8 +4138,8 @@
                   "prefix": "TransactionEvent_actorType_check"
                 },
                 {
-                  "expression": "\"fromStatus\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'RELEASED', 'REFUNDED', 'DISPUTED', 'REFUND_PENDING', 'PAYOUT_PENDING', 'CANCELLED', 'EXPIRED')",
-                  "name": "TransactionEvent_fromStatus_check_d88256ea",
+                  "expression": "\"fromStatus\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'PAYOUT_PENDING', 'RELEASED', 'REFUND_PENDING', 'REFUNDED', 'DISPUTED', 'CANCELLED', 'EXPIRED')",
+                  "name": "TransactionEvent_fromStatus_check_193f6868",
                   "prefix": "TransactionEvent_fromStatus_check"
                 },
                 {
@@ -3940,8 +4148,8 @@
                   "prefix": "TransactionEvent_outcome_check"
                 },
                 {
-                  "expression": "\"toStatus\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'RELEASED', 'REFUNDED', 'DISPUTED', 'REFUND_PENDING', 'PAYOUT_PENDING', 'CANCELLED', 'EXPIRED')",
-                  "name": "TransactionEvent_toStatus_check_ebd9e697",
+                  "expression": "\"toStatus\" IN ('PENDING_PAYMENT', 'HELD', 'COLLECTING', 'VERIFIED', 'REJECTED_AT_PICKUP', 'DELIVERED', 'CONFIRMED', 'REJECTED_AT_DELIVERY', 'PAYOUT_PENDING', 'RELEASED', 'REFUND_PENDING', 'REFUNDED', 'DISPUTED', 'CANCELLED', 'EXPIRED')",
+                  "name": "TransactionEvent_toStatus_check_c19f4977",
                   "prefix": "TransactionEvent_toStatus_check"
                 }
               ],
@@ -4094,6 +4302,11 @@
                 }
               ],
               "columns": {
+                "accountNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "active": {
                   "codecId": "pg/bool@1",
                   "dataType": "pg/bool",
@@ -4107,6 +4320,11 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
+                },
+                "bankName": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "businessName": {
                   "codecId": "pg/text@1",
@@ -4181,6 +4399,28 @@
                     ],
                     "namespaceId": "public",
                     "tableName": "ServiceArea"
+                  }
+                },
+                {
+                  "index": {
+                    "unique": [
+                      "userId"
+                    ]
+                  },
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Vendor"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
                   }
                 }
               ],
@@ -4785,6 +5025,7 @@
                 "PICKUP_INSPECTION",
                 "DELIVERY_PROOF",
                 "BUYER_DECISION",
+                "DISPUTE_EVIDENCE",
                 "OTHER"
               ]
             },
@@ -4831,9 +5072,9 @@
               "kind": "valueSet",
               "values": [
                 "PENDING",
+                "PROCESSING",
                 "SUCCESS",
                 "FAILED",
-                "PROCESSING",
                 "REVERSED"
               ]
             },
@@ -4856,11 +5097,11 @@
                 "DELIVERED",
                 "CONFIRMED",
                 "REJECTED_AT_DELIVERY",
+                "PAYOUT_PENDING",
                 "RELEASED",
+                "REFUND_PENDING",
                 "REFUNDED",
                 "DISPUTED",
-                "REFUND_PENDING",
-                "PAYOUT_PENDING",
                 "CANCELLED",
                 "EXPIRED"
               ]
@@ -4871,7 +5112,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "27ead91ff396b177733534b83900f393febeaa88a2957141b5ac999a35c615ad"
+    "storageHash": "1b7c550369057690582d60eab69fdb92bcbbb7e4d1bc300744ae58fc39ebc5eb"
   },
   "execution": {
     "executionHash": "dfa5e38e490cc9d28c10eadf87d12104d11cbc4f1eba14684c042f0db00d7f56",

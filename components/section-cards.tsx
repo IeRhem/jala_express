@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -6,104 +6,113 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react"
+} from "@/components/ui/card";
+import type { PilotDashboardMetrics } from "@/lib/dashboard-queries";
 
-export function SectionCards() {
+function formatNaira(kobo: number): string {
+  return `₦${(kobo / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+}
+
+export function SectionCards({ metrics }: { metrics?: PilotDashboardMetrics }) {
+  const m: PilotDashboardMetrics = metrics ?? {
+    totalTransactions: 0,
+    activeEscrowCount: 0,
+    completedReleasedCount: 0,
+    disputedOrRejectedCount: 0,
+    disputeRatePercent: 0,
+    activeEscrowVolumeKobo: 0,
+    realizedEscrowRevenueKobo: 0,
+    realizedDeliveryPayoutsKobo: 0,
+  };
+
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
+          <CardDescription>Active Held in Escrow</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+            {formatNaira(m.activeEscrowVolumeKobo)}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +12.5%
-            </Badge>
+            <Badge variant="outline">{m.activeEscrowCount} active deals</Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month{" "}
-            <IconTrendingUp className="size-4" />
+            Funds custody via Paystack
           </div>
           <div className="text-muted-foreground">
-            Visitors for the last 6 months
+            Awaiting pickup inspection or door confirmation
           </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
+          <CardDescription>Completed & Released</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+            {m.completedReleasedCount} / {m.totalTransactions}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingDown
-              />
-              -20%
-            </Badge>
+            <Badge variant="outline">Pilot Ledger</Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period{" "}
-            <IconTrendingDown className="size-4" />
+            Verified at pickup & accepted at door
           </div>
           <div className="text-muted-foreground">
-            Acquisition needs attention
+            Across Jalingo, Wukari & Takum
           </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
+          <CardDescription>Dispute & Rejection Rate</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+            {m.disputeRatePercent}%
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +12.5%
+            <Badge variant={m.disputedOrRejectedCount > 0 ? "destructive" : "outline"}>
+              {m.disputedOrRejectedCount} flagged
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention{" "}
-            <IconTrendingUp className="size-4" />
+            Includes fake/mismatched items caught at pickup
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">
+            Protected buyers from blind transfer loss
+          </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
+          <CardDescription>Realized Escrow Revenue</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+            {formatNaira(m.realizedEscrowRevenueKobo)}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +4.5%
+              Rider Pay: {formatNaira(m.realizedDeliveryPayoutsKobo)}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase{" "}
-            <IconTrendingUp className="size-4" />
+            Net platform escrow fees earned
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground">
+            Separated from seller payout & rider delivery fees
+          </div>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill/full";
 import { db } from "@/prisma/db";
 import { applySafeTransition } from "@/lib/escrow-ledger";
 import { processPendingOutbox } from "@/lib/outbox";
@@ -174,11 +175,11 @@ async function handleTextMessage(buyerId: string, buyerPhone: string, text: stri
       buyerId,
       state: "IDLE",
       context: { lastText: text },
-      lastMessageAt: new Date(),
+      lastMessageAt: Temporal.Now.instant(),
     });
   } else {
     await db.orm.public.Conversation.where({ id: existingConv.id }).update({
-      lastMessageAt: new Date(),
+      lastMessageAt: Temporal.Now.instant(),
       context: { lastText: text },
     });
   }

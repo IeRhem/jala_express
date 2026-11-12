@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'27ead91ff396b177733534b83900f393febeaa88a2957141b5ac999a35c615ad'>;
+  StorageHashBase<'1b7c550369057690582d60eab69fdb92bcbbb7e4d1bc300744ae58fc39ebc5eb'>;
 export type ExecutionHash =
   ExecutionHashBase<'dfa5e38e490cc9d28c10eadf87d12104d11cbc4f1eba14684c042f0db00d7f56'>;
 export type ProfileHash =
@@ -288,7 +288,8 @@ export type FieldOutputTypes = {
       readonly sizeBytes: CodecTypes['pg/int4@1']['output'] | null;
       readonly staffId: CodecTypes['pg/text@1']['output'] | null;
       readonly transactionId: CodecTypes['pg/text@1']['output'];
-      readonly type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'OTHER';
+      readonly type:
+        'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'DISPUTE_EVIDENCE' | 'OTHER';
     };
     readonly OutboxEvent: {
       readonly attempts: CodecTypes['pg/int4@1']['output'];
@@ -315,7 +316,7 @@ export type FieldOutputTypes = {
       readonly provider: 'PAYSTACK';
       readonly providerId: CodecTypes['pg/text@1']['output'] | null;
       readonly reference: CodecTypes['pg/text@1']['output'];
-      readonly status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSING' | 'REVERSED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
       readonly transactionId: CodecTypes['pg/text@1']['output'];
       readonly type: 'COLLECTION' | 'PAYOUT' | 'REFUND';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -361,6 +362,8 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly currency: CodecTypes['pg/text@1']['output'];
       readonly deliveryAttempt: CodecTypes['pg/int4@1']['output'];
+      readonly deliveryFee: CodecTypes['pg/int4@1']['output'];
+      readonly escrowFee: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly itemDescription: CodecTypes['pg/text@1']['output'];
       readonly riderId: CodecTypes['pg/text@1']['output'] | null;
@@ -374,14 +377,14 @@ export type FieldOutputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
-      readonly totalAmount: CodecTypes['pg/int4@1']['output'] | null;
+      readonly totalAmount: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly vendorId: CodecTypes['pg/text@1']['output'];
     };
@@ -397,11 +400,11 @@ export type FieldOutputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED'
         | null;
@@ -418,11 +421,11 @@ export type FieldOutputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
       readonly transactionId: CodecTypes['pg/text@1']['output'];
@@ -437,8 +440,10 @@ export type FieldOutputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly Vendor: {
+      readonly accountNumber: CodecTypes['pg/text@1']['output'] | null;
       readonly active: CodecTypes['pg/bool@1']['output'];
       readonly areaId: CodecTypes['pg/text@1']['output'];
+      readonly bankName: CodecTypes['pg/text@1']['output'] | null;
       readonly businessName: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
@@ -534,7 +539,8 @@ export type FieldInputTypes = {
       readonly sizeBytes: CodecTypes['pg/int4@1']['input'] | null;
       readonly staffId: CodecTypes['pg/text@1']['input'] | null;
       readonly transactionId: CodecTypes['pg/text@1']['input'];
-      readonly type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'OTHER';
+      readonly type:
+        'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'DISPUTE_EVIDENCE' | 'OTHER';
     };
     readonly OutboxEvent: {
       readonly attempts: CodecTypes['pg/int4@1']['input'];
@@ -561,7 +567,7 @@ export type FieldInputTypes = {
       readonly provider: 'PAYSTACK';
       readonly providerId: CodecTypes['pg/text@1']['input'] | null;
       readonly reference: CodecTypes['pg/text@1']['input'];
-      readonly status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSING' | 'REVERSED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
       readonly transactionId: CodecTypes['pg/text@1']['input'];
       readonly type: 'COLLECTION' | 'PAYOUT' | 'REFUND';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -607,6 +613,8 @@ export type FieldInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly currency: CodecTypes['pg/text@1']['input'];
       readonly deliveryAttempt: CodecTypes['pg/int4@1']['input'];
+      readonly deliveryFee: CodecTypes['pg/int4@1']['input'];
+      readonly escrowFee: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly itemDescription: CodecTypes['pg/text@1']['input'];
       readonly riderId: CodecTypes['pg/text@1']['input'] | null;
@@ -620,14 +628,14 @@ export type FieldInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
-      readonly totalAmount: CodecTypes['pg/int4@1']['input'] | null;
+      readonly totalAmount: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly vendorId: CodecTypes['pg/text@1']['input'];
     };
@@ -643,11 +651,11 @@ export type FieldInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED'
         | null;
@@ -664,11 +672,11 @@ export type FieldInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
       readonly transactionId: CodecTypes['pg/text@1']['input'];
@@ -683,8 +691,10 @@ export type FieldInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly Vendor: {
+      readonly accountNumber: CodecTypes['pg/text@1']['input'] | null;
       readonly active: CodecTypes['pg/bool@1']['input'];
       readonly areaId: CodecTypes['pg/text@1']['input'];
+      readonly bankName: CodecTypes['pg/text@1']['input'] | null;
       readonly businessName: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
@@ -780,7 +790,8 @@ export type StorageColumnTypes = {
       readonly sizeBytes: CodecTypes['pg/int4@1']['output'] | null;
       readonly staffId: CodecTypes['pg/text@1']['output'] | null;
       readonly transactionId: CodecTypes['pg/text@1']['output'];
-      readonly type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'OTHER';
+      readonly type:
+        'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'DISPUTE_EVIDENCE' | 'OTHER';
     };
     readonly OutboxEvent: {
       readonly attempts: CodecTypes['pg/int4@1']['output'];
@@ -807,7 +818,7 @@ export type StorageColumnTypes = {
       readonly provider: 'PAYSTACK';
       readonly providerId: CodecTypes['pg/text@1']['output'] | null;
       readonly reference: CodecTypes['pg/text@1']['output'];
-      readonly status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSING' | 'REVERSED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
       readonly transactionId: CodecTypes['pg/text@1']['output'];
       readonly type: 'COLLECTION' | 'PAYOUT' | 'REFUND';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -853,6 +864,8 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly currency: CodecTypes['pg/text@1']['output'];
       readonly deliveryAttempt: CodecTypes['pg/int4@1']['output'];
+      readonly deliveryFee: CodecTypes['pg/int4@1']['output'];
+      readonly escrowFee: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly itemDescription: CodecTypes['pg/text@1']['output'];
       readonly riderId: CodecTypes['pg/text@1']['output'] | null;
@@ -866,14 +879,14 @@ export type StorageColumnTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
-      readonly totalAmount: CodecTypes['pg/int4@1']['output'] | null;
+      readonly totalAmount: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly vendorId: CodecTypes['pg/text@1']['output'];
     };
@@ -889,11 +902,11 @@ export type StorageColumnTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED'
         | null;
@@ -910,11 +923,11 @@ export type StorageColumnTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
       readonly transactionId: CodecTypes['pg/text@1']['output'];
@@ -929,8 +942,10 @@ export type StorageColumnTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly Vendor: {
+      readonly accountNumber: CodecTypes['pg/text@1']['output'] | null;
       readonly active: CodecTypes['pg/bool@1']['output'];
       readonly areaId: CodecTypes['pg/text@1']['output'];
+      readonly bankName: CodecTypes['pg/text@1']['output'] | null;
       readonly businessName: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
@@ -1026,7 +1041,8 @@ export type StorageColumnInputTypes = {
       readonly sizeBytes: CodecTypes['pg/int4@1']['input'] | null;
       readonly staffId: CodecTypes['pg/text@1']['input'] | null;
       readonly transactionId: CodecTypes['pg/text@1']['input'];
-      readonly type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'OTHER';
+      readonly type:
+        'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'DISPUTE_EVIDENCE' | 'OTHER';
     };
     readonly OutboxEvent: {
       readonly attempts: CodecTypes['pg/int4@1']['input'];
@@ -1053,7 +1069,7 @@ export type StorageColumnInputTypes = {
       readonly provider: 'PAYSTACK';
       readonly providerId: CodecTypes['pg/text@1']['input'] | null;
       readonly reference: CodecTypes['pg/text@1']['input'];
-      readonly status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSING' | 'REVERSED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
       readonly transactionId: CodecTypes['pg/text@1']['input'];
       readonly type: 'COLLECTION' | 'PAYOUT' | 'REFUND';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -1099,6 +1115,8 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly currency: CodecTypes['pg/text@1']['input'];
       readonly deliveryAttempt: CodecTypes['pg/int4@1']['input'];
+      readonly deliveryFee: CodecTypes['pg/int4@1']['input'];
+      readonly escrowFee: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly itemDescription: CodecTypes['pg/text@1']['input'];
       readonly riderId: CodecTypes['pg/text@1']['input'] | null;
@@ -1112,14 +1130,14 @@ export type StorageColumnInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
-      readonly totalAmount: CodecTypes['pg/int4@1']['input'] | null;
+      readonly totalAmount: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly vendorId: CodecTypes['pg/text@1']['input'];
     };
@@ -1135,11 +1153,11 @@ export type StorageColumnInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED'
         | null;
@@ -1156,11 +1174,11 @@ export type StorageColumnInputTypes = {
         | 'DELIVERED'
         | 'CONFIRMED'
         | 'REJECTED_AT_DELIVERY'
+        | 'PAYOUT_PENDING'
         | 'RELEASED'
+        | 'REFUND_PENDING'
         | 'REFUNDED'
         | 'DISPUTED'
-        | 'REFUND_PENDING'
-        | 'PAYOUT_PENDING'
         | 'CANCELLED'
         | 'EXPIRED';
       readonly transactionId: CodecTypes['pg/text@1']['input'];
@@ -1175,8 +1193,10 @@ export type StorageColumnInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly Vendor: {
+      readonly accountNumber: CodecTypes['pg/text@1']['input'] | null;
       readonly active: CodecTypes['pg/bool@1']['input'];
       readonly areaId: CodecTypes['pg/text@1']['input'];
+      readonly bankName: CodecTypes['pg/text@1']['input'] | null;
       readonly businessName: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
@@ -1245,7 +1265,8 @@ export namespace Models {
     userId: CodecTypes['pg/text@1']['output'] | null;
     conversations: public_Conversation[];
     transactions: public_Transaction[];
-    readonly [RelationKeys]?: 'conversations' | 'transactions';
+    user: public_User | null;
+    readonly [RelationKeys]?: 'conversations' | 'transactions' | 'user';
   };
   export type public_Category = {
     active: CodecTypes['pg/bool@1']['output'];
@@ -1282,7 +1303,7 @@ export namespace Models {
     sizeBytes: CodecTypes['pg/int4@1']['output'] | null;
     staffId: CodecTypes['pg/text@1']['output'] | null;
     transactionId: CodecTypes['pg/text@1']['output'];
-    type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'OTHER';
+    type: 'PICKUP_INSPECTION' | 'DELIVERY_PROOF' | 'BUYER_DECISION' | 'DISPUTE_EVIDENCE' | 'OTHER';
     staff: public_Staff | null;
     transaction: public_Transaction;
     readonly [RelationKeys]?: 'staff' | 'transaction';
@@ -1314,7 +1335,7 @@ export namespace Models {
     provider: 'PAYSTACK';
     providerId: CodecTypes['pg/text@1']['output'] | null;
     reference: CodecTypes['pg/text@1']['output'];
-    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSING' | 'REVERSED';
+    status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
     transactionId: CodecTypes['pg/text@1']['output'];
     type: 'COLLECTION' | 'PAYOUT' | 'REFUND';
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -1364,7 +1385,9 @@ export namespace Models {
     role: public_Role;
     transactionEvents: public_TransactionEvent[];
     transactions: public_Transaction[];
-    readonly [RelationKeys]?: 'deliveryEvidence' | 'role' | 'transactionEvents' | 'transactions';
+    user: public_User | null;
+    readonly [RelationKeys]?:
+      'deliveryEvidence' | 'role' | 'transactionEvents' | 'transactions' | 'user';
   };
   export type public_Transaction = {
     amount: CodecTypes['pg/int4@1']['output'];
@@ -1373,6 +1396,8 @@ export namespace Models {
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     currency: CodecTypes['pg/text@1']['output'];
     deliveryAttempt: CodecTypes['pg/int4@1']['output'];
+    deliveryFee: CodecTypes['pg/int4@1']['output'];
+    escrowFee: CodecTypes['pg/int4@1']['output'];
     id: CodecTypes['pg/text@1']['output'];
     itemDescription: CodecTypes['pg/text@1']['output'];
     riderId: CodecTypes['pg/text@1']['output'] | null;
@@ -1386,14 +1411,14 @@ export namespace Models {
       | 'DELIVERED'
       | 'CONFIRMED'
       | 'REJECTED_AT_DELIVERY'
+      | 'PAYOUT_PENDING'
       | 'RELEASED'
+      | 'REFUND_PENDING'
       | 'REFUNDED'
       | 'DISPUTED'
-      | 'REFUND_PENDING'
-      | 'PAYOUT_PENDING'
       | 'CANCELLED'
       | 'EXPIRED';
-    totalAmount: CodecTypes['pg/int4@1']['output'] | null;
+    totalAmount: CodecTypes['pg/int4@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     vendorId: CodecTypes['pg/text@1']['output'];
     buyer: public_Buyer;
@@ -1426,11 +1451,11 @@ export namespace Models {
       | 'DELIVERED'
       | 'CONFIRMED'
       | 'REJECTED_AT_DELIVERY'
+      | 'PAYOUT_PENDING'
       | 'RELEASED'
+      | 'REFUND_PENDING'
       | 'REFUNDED'
       | 'DISPUTED'
-      | 'REFUND_PENDING'
-      | 'PAYOUT_PENDING'
       | 'CANCELLED'
       | 'EXPIRED'
       | null;
@@ -1447,11 +1472,11 @@ export namespace Models {
       | 'DELIVERED'
       | 'CONFIRMED'
       | 'REJECTED_AT_DELIVERY'
+      | 'PAYOUT_PENDING'
       | 'RELEASED'
+      | 'REFUND_PENDING'
       | 'REFUNDED'
       | 'DISPUTED'
-      | 'REFUND_PENDING'
-      | 'PAYOUT_PENDING'
       | 'CANCELLED'
       | 'EXPIRED';
     transactionId: CodecTypes['pg/text@1']['output'];
@@ -1468,12 +1493,17 @@ export namespace Models {
     name: CodecTypes['pg/text@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     accounts: public_Account[];
+    buyer: public_Buyer | null;
     sessions: public_Session[];
-    readonly [RelationKeys]?: 'accounts' | 'sessions';
+    staff: public_Staff | null;
+    vendor: public_Vendor | null;
+    readonly [RelationKeys]?: 'accounts' | 'buyer' | 'sessions' | 'staff' | 'vendor';
   };
   export type public_Vendor = {
+    accountNumber: CodecTypes['pg/text@1']['output'] | null;
     active: CodecTypes['pg/bool@1']['output'];
     areaId: CodecTypes['pg/text@1']['output'];
+    bankName: CodecTypes['pg/text@1']['output'] | null;
     businessName: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     id: CodecTypes['pg/text@1']['output'];
@@ -1485,7 +1515,8 @@ export namespace Models {
     area: public_ServiceArea;
     categories: public_VendorCategory[];
     transactions: public_Transaction[];
-    readonly [RelationKeys]?: 'area' | 'categories' | 'transactions';
+    user: public_User | null;
+    readonly [RelationKeys]?: 'area' | 'categories' | 'transactions' | 'user';
   };
   export type public_VendorCategory = {
     active: CodecTypes['pg/bool@1']['output'];
@@ -1726,7 +1757,20 @@ type ContractBase = Omit<
                 { readonly columns: readonly ['userId'] },
               ];
               indexes: readonly [];
-              foreignKeys: readonly [];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Buyer';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'user';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly Category: {
               columns: {
@@ -2460,7 +2504,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['userId'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['userId'] },
+                { readonly columns: readonly ['phone'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'Staff_roleId_idx_ffccc9a4';
@@ -2470,6 +2517,18 @@ type ContractBase = Omit<
                 },
               ];
               foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Staff';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'user';
+                    readonly columns: readonly ['id'];
+                  };
+                },
                 {
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
@@ -2531,6 +2590,26 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly deliveryFee: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                  readonly many: false;
+                };
+                readonly escrowFee: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                  readonly many: false;
+                };
                 readonly id: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -2568,7 +2647,7 @@ type ContractBase = Omit<
                 readonly totalAmount: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
+                  readonly nullable: false;
                   readonly many: false;
                 };
                 readonly updatedAt: {
@@ -2827,6 +2906,12 @@ type ContractBase = Omit<
             };
             readonly Vendor: {
               columns: {
+                readonly accountNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly active: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -2841,6 +2926,12 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly bankName: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly businessName: {
@@ -2917,6 +3008,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'ServiceArea';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Vendor';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'user';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -3169,6 +3272,7 @@ type ContractBase = Omit<
                 'PICKUP_INSPECTION',
                 'DELIVERY_PROOF',
                 'BUYER_DECISION',
+                'DISPUTE_EVIDENCE',
                 'OTHER',
               ];
             };
@@ -3194,7 +3298,7 @@ type ContractBase = Omit<
             };
             readonly PaymentStatus: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['PENDING', 'SUCCESS', 'FAILED', 'PROCESSING', 'REVERSED'];
+              readonly values: readonly ['PENDING', 'PROCESSING', 'SUCCESS', 'FAILED', 'REVERSED'];
             };
             readonly PaymentType: {
               readonly kind: 'valueSet';
@@ -3211,11 +3315,11 @@ type ContractBase = Omit<
                 'DELIVERED',
                 'CONFIRMED',
                 'REJECTED_AT_DELIVERY',
+                'PAYOUT_PENDING',
                 'RELEASED',
+                'REFUND_PENDING',
                 'REFUNDED',
                 'DISPUTED',
-                'REFUND_PENDING',
-                'PAYOUT_PENDING',
                 'CANCELLED',
                 'EXPIRED',
               ];
@@ -3437,6 +3541,15 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['buyerId'];
+                };
+              };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
                 };
               };
             };
@@ -4151,6 +4264,15 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['riderId'];
                 };
               };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'Staff';
@@ -4196,6 +4318,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly deliveryFee: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly escrowFee: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -4217,7 +4347,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly totalAmount: {
-                readonly nullable: true;
+                readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly updatedAt: {
@@ -4336,6 +4466,8 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currency: { readonly column: 'currency' };
                 readonly deliveryAttempt: { readonly column: 'deliveryAttempt' };
+                readonly deliveryFee: { readonly column: 'deliveryFee' };
+                readonly escrowFee: { readonly column: 'escrowFee' };
                 readonly id: { readonly column: 'id' };
                 readonly itemDescription: { readonly column: 'itemDescription' };
                 readonly riderId: { readonly column: 'riderId' };
@@ -4480,12 +4612,48 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['userId'];
                 };
               };
+              readonly buyer: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Buyer';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
               readonly sessions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
                   readonly model: 'Session';
                 };
                 readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly staff: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Staff';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly vendor: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Vendor';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['userId'];
@@ -4508,12 +4676,20 @@ type ContractBase = Omit<
           };
           readonly Vendor: {
             readonly fields: {
+              readonly accountNumber: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly active: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
               readonly areaId: {
                 readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly bankName: {
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly businessName: {
@@ -4590,13 +4766,24 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['vendorId'];
                 };
               };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'Vendor';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly accountNumber: { readonly column: 'accountNumber' };
                 readonly active: { readonly column: 'active' };
                 readonly areaId: { readonly column: 'areaId' };
+                readonly bankName: { readonly column: 'bankName' };
                 readonly businessName: { readonly column: 'businessName' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
@@ -4817,6 +5004,7 @@ type ContractBase = Omit<
               { readonly name: 'PICKUP_INSPECTION'; readonly value: 'PICKUP_INSPECTION' },
               { readonly name: 'DELIVERY_PROOF'; readonly value: 'DELIVERY_PROOF' },
               { readonly name: 'BUYER_DECISION'; readonly value: 'BUYER_DECISION' },
+              { readonly name: 'DISPUTE_EVIDENCE'; readonly value: 'DISPUTE_EVIDENCE' },
               { readonly name: 'OTHER'; readonly value: 'OTHER' },
             ];
           };
@@ -4861,9 +5049,9 @@ type ContractBase = Omit<
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
               { readonly name: 'PENDING'; readonly value: 'PENDING' },
+              { readonly name: 'PROCESSING'; readonly value: 'PROCESSING' },
               { readonly name: 'SUCCESS'; readonly value: 'SUCCESS' },
               { readonly name: 'FAILED'; readonly value: 'FAILED' },
-              { readonly name: 'PROCESSING'; readonly value: 'PROCESSING' },
               { readonly name: 'REVERSED'; readonly value: 'REVERSED' },
             ];
           };
@@ -4886,11 +5074,11 @@ type ContractBase = Omit<
               { readonly name: 'DELIVERED'; readonly value: 'DELIVERED' },
               { readonly name: 'CONFIRMED'; readonly value: 'CONFIRMED' },
               { readonly name: 'REJECTED_AT_DELIVERY'; readonly value: 'REJECTED_AT_DELIVERY' },
+              { readonly name: 'PAYOUT_PENDING'; readonly value: 'PAYOUT_PENDING' },
               { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
+              { readonly name: 'REFUND_PENDING'; readonly value: 'REFUND_PENDING' },
               { readonly name: 'REFUNDED'; readonly value: 'REFUNDED' },
               { readonly name: 'DISPUTED'; readonly value: 'DISPUTED' },
-              { readonly name: 'REFUND_PENDING'; readonly value: 'REFUND_PENDING' },
-              { readonly name: 'PAYOUT_PENDING'; readonly value: 'PAYOUT_PENDING' },
               { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
               { readonly name: 'EXPIRED'; readonly value: 'EXPIRED' },
             ];
@@ -4907,6 +5095,7 @@ type ContractBase = Omit<
             { readonly name: 'PICKUP_INSPECTION'; readonly value: 'PICKUP_INSPECTION' },
             { readonly name: 'DELIVERY_PROOF'; readonly value: 'DELIVERY_PROOF' },
             { readonly name: 'BUYER_DECISION'; readonly value: 'BUYER_DECISION' },
+            { readonly name: 'DISPUTE_EVIDENCE'; readonly value: 'DISPUTE_EVIDENCE' },
             { readonly name: 'OTHER'; readonly value: 'OTHER' },
           ];
           readonly EventActorType: readonly [
@@ -4935,9 +5124,9 @@ type ContractBase = Omit<
           ];
           readonly PaymentStatus: readonly [
             { readonly name: 'PENDING'; readonly value: 'PENDING' },
+            { readonly name: 'PROCESSING'; readonly value: 'PROCESSING' },
             { readonly name: 'SUCCESS'; readonly value: 'SUCCESS' },
             { readonly name: 'FAILED'; readonly value: 'FAILED' },
-            { readonly name: 'PROCESSING'; readonly value: 'PROCESSING' },
             { readonly name: 'REVERSED'; readonly value: 'REVERSED' },
           ];
           readonly PaymentType: readonly [
@@ -4954,11 +5143,11 @@ type ContractBase = Omit<
             { readonly name: 'DELIVERED'; readonly value: 'DELIVERED' },
             { readonly name: 'CONFIRMED'; readonly value: 'CONFIRMED' },
             { readonly name: 'REJECTED_AT_DELIVERY'; readonly value: 'REJECTED_AT_DELIVERY' },
+            { readonly name: 'PAYOUT_PENDING'; readonly value: 'PAYOUT_PENDING' },
             { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
+            { readonly name: 'REFUND_PENDING'; readonly value: 'REFUND_PENDING' },
             { readonly name: 'REFUNDED'; readonly value: 'REFUNDED' },
             { readonly name: 'DISPUTED'; readonly value: 'DISPUTED' },
-            { readonly name: 'REFUND_PENDING'; readonly value: 'REFUND_PENDING' },
-            { readonly name: 'PAYOUT_PENDING'; readonly value: 'PAYOUT_PENDING' },
             { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
             { readonly name: 'EXPIRED'; readonly value: 'EXPIRED' },
           ];

@@ -16,12 +16,9 @@ import {
 import {
   IconDashboard,
   IconListDetails,
-  IconChartBar,
   IconFolder,
   IconUsers,
   IconSettings,
-  IconHelp,
-  IconSearch,
   IconInnerShadowTop,
 } from "@tabler/icons-react";
 
@@ -33,23 +30,18 @@ const data = {
       icon: <IconDashboard />,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Escrow Ledger",
+      url: "/transactions",
       icon: <IconListDetails />,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: <IconChartBar />,
-    },
-    {
-      title: "Projects",
-      url: "#",
+      title: "New Order",
+      url: "/transactions/new",
       icon: <IconFolder />,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Vendors",
+      url: "/vendors",
       icon: <IconUsers />,
     },
   ],
@@ -58,16 +50,6 @@ const data = {
       title: "Settings",
       url: "/account",
       icon: <IconSettings />,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: <IconHelp />,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: <IconSearch />,
     },
   ],
 };
